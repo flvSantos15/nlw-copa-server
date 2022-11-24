@@ -4,7 +4,7 @@ generator client {
 
 generator erd {
   provider = "prisma-erd-generator"
-  output = "../ERD.svg"
+  output   = "../ERD.svg"
 }
 
 datasource db {
@@ -17,4 +17,54 @@ model Pool {
   title     String
   code      String   @unique
   createdAt DateTime @default(now())
+  ownerId   String?
+
+  participants Participant[]
+  owner        User?         @relation(fields: [ownerId], references: [id])
+}
+
+model Participant {
+  id     String @id @default(cuid())
+  userId String
+  poolId String
+
+  guesses Guess[]
+  user    User    @relation(fields: [userId], references: [id])
+  pool    Pool    @relation(fields: [poolId], references: [id])
+
+  @@unique([userId, poolId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  participatingAt Participant[]
+  ownPools        Pool[]
+}
+
+model Game {
+  id   String   @id @default(cuid())
+  date DateTime
+
+  firstTeamCountryCode  String
+  secondTeamCountryCode String
+
+  guesses Guess[] //relaciomento inverso para o guess, não cria coluna
+}
+
+model Guess {
+  id String @id @default(cuid())
+
+  firstTeamPoints Int
+  secondTeaPoints Int
+  createdAt       DateTime @default(now())
+  gameId          String
+  participantId   String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+  game        Game        @relation(fields: [gameId], references: [id]) //relacionamento de tabela no prisma
 }
